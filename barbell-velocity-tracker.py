@@ -1,59 +1,66 @@
 # import necessary packages
 import numpy as np
-import cv2
+import cv2 as cv
 import imutils
+import time
+from pyzbar import pyzbar
+import argparse
 
-def detect_qr(frame):
-	'''
-	Prepares frame for QR code detection and returns bounding box of detected QR code.
+def read_qr(frame):
+	barcodes = pyzbar.decode(frame)
+	for barcode in barcodes:
+		x, y, w, h = barcode.rect
+  
+		barcode_info = barcode.data.decode('utf-8')
+		cv.rectangle(frame, (x, y),(x+w, y+h), (0, 255, 0), 2)
+			
+		
+		font = cv.FONT_HERSHEY_DUPLEX
+		cv.putText(frame, barcode_info, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
+		
+		with open("barcode_result.txt", mode ='w') as file:
+			file.write("Recognized Barcode:" + barcode_info)
 	
-			Parameters:
-				frame (obj): A single freeze frame from the inputted video.
-				 
-			Returns:
-				box (int0): An int64 representing the bounding box of the detected QR code. 
-	'''
-	
-	# convert the frame to grayscale
-	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
- 
-	# compute the Scharr gradient magnitude representation of the frames
-	# in both the x and y direction using OpenCV 2.4
-	ddepth = cv2.cv.CV_32F if imutils.is_cv2() else cv2.CV_32F
-	gradX = cv2.Sobel(gray, ddepth=ddepth, dx=1, dy=0, ksize=-1)
-	gradY = cv2.Sobel(gray, ddepth=ddepth, dx=0, dy=1, ksize=-1)
- 
-	# subtract the y-gradient from the x-gradient
-	gradient = cv2.subtract(gradX, gradY)
-	gradient = cv2.convertScaleAbs(gradient)
- 
-	# blur and threshold the frame
-	blurred = cv2.blur(gradient, (9, 9))
-	(_, thresh) = cv2.threshold(blurred, 225, 255, cv2.THRESH_BINARY)
- 
-	# construct a closing kernel and apply it to the thresholded frame
-	kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 7))
-	closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
- 
-	# perform a series of erosions and dilations
-	closed = cv2.erode(closed, None, iterations=4)
-	closed = cv2.dilate(closed, None, iterations=4)
- 
-	# find the contours in the thresholded frame
-	cnts = cv2.findContours(closed.copy(), cv2.RETR_EXTERNAL,
-		cv2.CHAIN_APPROX_SIMPLE)
-	cnts = imutils.grab_contours(cnts)
- 
-	# if no contours were found, return None
-	if len(cnts) == 0:
-		return None
+	return frame
 
-	# otherwise, sort the contours by area and compute the rotated
-	# bounding box of the largest contour
-	c = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
-	rect = cv2.minAreaRect(c)
-	box = cv2.cv.BoxPoints(rect) if imutils.is_cv2() else cv2.boxPoints(rect)
-	box = np.int0(box)
+def main():
+    # construct the argument parse and parse the arguments on script call
+	ap = argparse.ArgumentParser()
+	# For tracking ball from .mp4 video
+	ap.add_argument("-v", "--video",
+		help="optional path for video file")
+	args, unknown = ap.parse_known_args()
+	args_dict = vars(args)
  
-	# return the bounding box of the detect QR code
-	return box
+	# Check if no video was supplied and set to camera
+	# else, grab a reference to the video file
+	if not args_dict.get("video", False):
+		camera = cv.VideoCapture(0)
+	else:
+		camera = cv.VideoCapture(args_dict["video"])
+ 
+	# allow the camera or video file to warm up
+	time.sleep(2.0)
+	
+	while True:
+		(grabbed, frame) = camera.read()
+	
+		if args_dict.get("video") and not grabbed:
+			break
+
+		# resize frame, blur it, and convert from BGR to HSV color space
+		frame = imutils.resize(frame, width=1000)
+		grayscale = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+		blurred = cv.GaussianBlur(grayscale, (11, 11), 0)
+		ret, processed_frame = cv.threshold(blurred, 0, 255, cv.THRESH_BINARY+cv.THRESH_OTSU)
+  		
+		frame = read_qr(processed_frame)
+		cv.imshow('Barcode/QR Code Reader', frame)
+		if cv.waitKey(1) & 0xFF == 27:
+			break
+		
+	camera.release()
+	cv.destroyAllWindows()
+		
+if __name__ == '__main__':
+	main()
