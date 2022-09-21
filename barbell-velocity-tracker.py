@@ -7,14 +7,14 @@ from pyzbar import pyzbar
 import argparse
 import pandas as pd
 
-def read_qr(frame):
-	"""Detects a QR code within a given frame, draws border around QR code and returns decoded information
+def detect_qr(frame, data_df, current_time):
+	"""Detects a QR code within a given frame, draws border around QR code and returns decoded information.
 
 	Args:
-		frame (_type_): A single frame from the inputted video.
+		frame (OutputArray): A single frame from the inputted video.
 
 	Returns:
-		frame (_type_): _description_
+		frame (OutputArray): The same frame un-changed from the input.
 	"""
 	
 	barcodes = pyzbar.decode(frame)
@@ -23,7 +23,9 @@ def read_qr(frame):
   
 		barcode_info = barcode.data.decode('utf-8')
 		cv.rectangle(frame, (x, y),(x+w, y+h), (0, 255, 0), 2)
-			
+		
+		# Save positions in DataFrame
+		data_df.loc[data_df.size/3] = [x , y, current_time]
 		
 		font = cv.FONT_HERSHEY_DUPLEX
 		cv.putText(frame, barcode_info, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
@@ -68,19 +70,29 @@ def main():
 	# Create DataFrame to hold coordinates and time
 	data_columns = ['x', 'y', 'time']
 	data_df = pd.DataFrame(data = None, columns=data_columns, dtype=float)
+ 
+	# Retrieve Camera information
+	frameCount = int(camera.get(cv.CAP_PROP_FRAME_COUNT))
+	vid_fps = int(camera.get(cv.CAP_PROP_FPS))
+	print(f"FrameCount:{frameCount}")
+	print(f"Video FPS:{vid_fps}")
 
 	# Read time at video start
 	start = time.time()
 	
 	while True:
+		# Grab current video frame
 		(grabbed, frame) = camera.read()
+  
+		# Check current time
+		current_time = time.time() - start
 	
 		if args_dict.get("video") and not grabbed:
 			break
 
 		processed_frame = frame_preprocess(frame)
   		
-		frame = read_qr(processed_frame)
+		frame, data_df, current_time = detect_qr(processed_frame, data_df, current_time)
 		cv.imshow('Barcode/QR Code Reader', frame)
    
 		if cv.waitKey(1) & 0xFF == 27:
