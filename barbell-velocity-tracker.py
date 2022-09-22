@@ -12,6 +12,8 @@ def detect_qr(frame, data_df, current_time):
 
 	Args:
 		frame (OutputArray): A single frame from the inputted video.
+		data_df (DataFrame): A DataFrame containing X, Y, and time data.
+		current_time (float): Current time expressed as a float since epoch start. 
 
 	Returns:
 		frame (OutputArray): The same frame un-changed from the input.
@@ -28,9 +30,9 @@ def detect_qr(frame, data_df, current_time):
 		data_df.loc[data_df.size/3] = [x , y, current_time]
 		
 		font = cv.FONT_HERSHEY_DUPLEX
-		cv.putText(frame, barcode_info, (x + 6, y - 6), font, 2.0, (255, 255, 255), 1)
+		cv.putText(frame, barcode_info, (x + 6, y - 6), font, 2.0, (255, 0, 0), 1)
 	
-	return frame
+	return frame, data_df
 
 def frame_preprocess(frame):
     
@@ -90,16 +92,22 @@ def main():
 		if args_dict.get("video") and not grabbed:
 			break
 
-		processed_frame = frame_preprocess(frame)
+		processed_frame = imutils.resize(frame, width=1000)
+		# processed_frame = cv.GaussianBlur(frame, (11, 11), 0)
+
+		# processed_frame = frame_preprocess(frame)
   		
-		frame, data_df, current_time = detect_qr(processed_frame, data_df, current_time)
-		cv.imshow('Barcode/QR Code Reader', frame)
+		processed_frame, data_df = detect_qr(processed_frame, data_df, current_time)
+		cv.imshow('Barcode/QR Code Reader', processed_frame)
    
 		if cv.waitKey(1) & 0xFF == 27:
 			break
 		
 	camera.release()
 	cv.destroyAllWindows()
+ 
+	# Export plot and DataFrame
+	data_df.to_csv('Data_Set.csv', sep=",")
 		
 if __name__ == '__main__':
 	main()
