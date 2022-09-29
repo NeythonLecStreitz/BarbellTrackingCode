@@ -9,6 +9,19 @@ import pandas as pd
 import AiPhile
 import imutils
 from collections import deque
+import cv2.aruco as aruco
+
+def findAruco(img, marker_size=6, total_markers=250, draw=True):
+	gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+	key = getattr(aruco, f'DICT_{marker_size}X{marker_size}_{total_markers}')
+	arucoDict = aruco.Dictionary_get(key)
+	arucoParam = aruco.DetectorParameters_create()
+	bbox, ids, rejectedImgPoints = aruco.detectMarkers(gray, arucoDict, parameters=arucoParam)
+	if draw:
+		aruco.drawDetectedMarkers(img, bbox)
+ 
+	cv.imshow("Gray Frame", gray)
+	return bbox, ids
 
 def qr_detection(frame):
 	# QR code detector function 
@@ -17,19 +30,17 @@ def qr_detection(frame):
 	grayscale = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
  
 	# Scale image down to reduce size
-	scale = 0.3
-	width = int(grayscale.shape[1] * scale)
-	height = int(grayscale.shape[0] * scale)
+	scale = 0.2
+	width, height = int(grayscale.shape[1] * scale), int(grayscale.shape[0] * scale)
 	scaled = cv.resize(grayscale, (width, height))
  
 	# Blur image
 	blur = cv.GaussianBlur(scaled, (5, 5), 0)
- 
 	# Binary Threshold image
 	ret, bw_im = cv.threshold(blur, 0, 255, cv.THRESH_BINARY+cv.THRESH_OTSU)
  
  
-	cv.imshow("Preprocessed Image", bw_im)
+	cv.imshow("Preprocessed Image:", bw_im)
 	rect = False
 	hull = False
 	# create QR code object
@@ -82,7 +93,62 @@ def main():
 	# Create DataFrame to hold coordinates and time
 	data_columns = ['x', 'y', 'time']
 	data_df = pd.DataFrame(data = None, columns=data_columns, dtype=float)
+	
+	camera = cv.VideoCapture(camera_source)
+	time.sleep(2)
  
+	start_time = time.time()
+	while True:
+		ret, frame = camera.read()
+  
+		# Check current time
+		current_time = time.time() - start_time
+
+  
+		bbox, ids = findAruco(frame)
+		# loop over the detected ArUCo corners
+		if len(bbox) > 0:
+    		# flatten the ArUco IDs list
+			ids = ids.flatten()
+  
+			for (markerCorner, markerID) in zip(bbox, ids):
+				# extract the marker corners (which are always returned
+				# in top-left, top-right, bottom-right, and bottom-left
+				# order)
+				corners = markerCorner.reshape((4, 2))
+				(topLeft, topRight, bottomRight, bottomLeft) = corners
+				# convert each of the (x, y)-coordinate pairs to integers
+				topRight = (int(topRight[0]), int(topRight[1]))
+				bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+				bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+				topLeft = (int(topLeft[0]), int(topLeft[1]))
+	
+				# compute and draw the center (x, y)-coordinates of the
+				# ArUco marker
+				cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+				cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+				cv.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
+    
+				data_df.loc[data_df.size/3] = [cX , cY, current_time]
+				# coords.appendleft((cX, cY))
+  
+		# loop over deque for tracked position
+		for i in range(1, len(coords)):
+		
+			# Ignore drawing if curr/past position is None
+			if coords[i - 1] is None or coords[i] is None:
+				continue
+			# Compute line between positions and draw
+			cv.line(frame, coords[i - 1], coords[i], (0, 0, 255), 2)
+   
+   
+		key = cv.waitKey(1)
+		# if the '' keqy is pressed, break from the loop
+		if key == ord("q"):
+			break
+		resized = cv.resize(frame, width=800)
+		cv.imshow("img", resized)
+	'''
 	ref_point = []
 	click = False
 	points =()
@@ -101,11 +167,9 @@ def main():
 	qr_detected= False
 	# stop_code=False
 
-	frame_counter =0
 	start_time = time.time()
 	# keep looping until the 'q' key is pressed
 	while True:
-		frame_counter +=1
 		ret, frame = camera.read()
 		img = frame.copy()
   
@@ -132,11 +196,11 @@ def main():
    
 			center_coords = determine_center(old_points)
 			cv.circle(frame, center_coords, 20, AiPhile.VIOLET, 10)
-    
+	
 			data_df.loc[data_df.size/3] = [center_coords[0] , center_coords[1], current_time]
 			# update the position queue
 			coords.appendleft(center_coords)
-    
+	
 		if qr_detected and stop_code==False:
 			# print('detecting')
 			new_points, status, error = cv.calcOpticalFlowPyrLK(old_gray, gray_frame, old_points, None, **lk_params)
@@ -158,10 +222,8 @@ def main():
 			# Ignore drawing if curr/past position is None
 			if coords[i - 1] is None or coords[i] is None:
 				continue
-
 			# Compute line between positions and draw
-			thickness = int(np.sqrt(args_dict["buffer"] / float(i + 1)) * 2.5)
-			cv.line(frame, coords[i - 1], coords[i], (0, 0, 255), thickness)
+			cv.line(frame, coords[i - 1], coords[i], (0, 0, 255), 2)
    
 		old_gray = gray_frame.copy()
 		# press 'r' to reset the window
@@ -172,7 +234,6 @@ def main():
 		# if the 'c' key is pressed, break from the loop
 		if key == ord("q"):
 			break
-		fps = frame_counter/(time.time()-start_time)
 		cv.imshow("Barbell Velocity Tracker", frame)
 	 
 	camera.release()
@@ -180,6 +241,6 @@ def main():
  
 	# Export plot and DataFrame
 	data_df.to_csv('Data_Set.csv', sep=",")
-		
+	'''
 if __name__ == '__main__':
 	main()
