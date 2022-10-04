@@ -8,6 +8,7 @@ import argparse
 import pandas as pd
 import AiPhile
 import imutils
+from imutils.video import FPS
 from collections import deque
 import cv2.aruco as aruco
 
@@ -75,7 +76,7 @@ def main():
 		help="optional path for video file")
 	# Buffer size corresponds to length of deque
 	# Larger buffer = longer ball contrail
-	ap.add_argument("-b", "--buffer", type=int, default=64,
+	ap.add_argument("-b", "--buffer", type=int, default=10000,
 	help="max buffer size")
 	args, unknown = ap.parse_known_args()
 	args_dict = vars(args)
@@ -87,19 +88,25 @@ def main():
 	else:
 		camera_source = args_dict["video"]
  
+	camera = cv.VideoCapture(camera_source)
+	time.sleep(2)
+	(ret, frame) = camera.read()
+ 
+	# frameCount = int(camera.get(cv.CAP_PROP_FRAME_COUNT))
+	vid_fps = int(camera.get(cv.CAP_PROP_FPS))
+	print(vid_fps)
+	fps = FPS().start()
+ 
 	# Initialize deque for list of tracked coords using buffer size
 	coords = deque(maxlen=args_dict["buffer"])
 
 	# Create DataFrame to hold coordinates and time
 	data_columns = ['x', 'y', 'time']
 	data_df = pd.DataFrame(data = None, columns=data_columns, dtype=float)
-	
-	camera = cv.VideoCapture(camera_source)
-	time.sleep(2)
  
 	start_time = time.time()
 	while True:
-		ret, frame = camera.read()
+		(ret, frame) = camera.read()
   
 		# Check current time
 		current_time = time.time() - start_time
@@ -130,7 +137,7 @@ def main():
 				cv.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
     
 				data_df.loc[data_df.size/3] = [cX , cY, current_time]
-				# coords.appendleft((cX, cY))
+				coords.appendleft((cX, cY))
   
 		# loop over deque for tracked position
 		for i in range(1, len(coords)):
@@ -140,14 +147,19 @@ def main():
 				continue
 			# Compute line between positions and draw
 			cv.line(frame, coords[i - 1], coords[i], (0, 0, 255), 2)
-   
-   
+
+		cur_frame = camera.get(cv.CAP_PROP_POS_FRAMES)
+		fps.update()
+		fps.stop()
+  
+		print(fps.fps())
 		key = cv.waitKey(1)
-		# if the '' keqy is pressed, break from the loop
+		# if the 'q' key is pressed, break from the loop
 		if key == ord("q"):
 			break
-		resized = cv.resize(frame, width=800)
-		cv.imshow("img", resized)
+  
+		cv.imshow("frame", frame)
+		cv.resizeWindow("frame", (1500, 1000))
 	'''
 	ref_point = []
 	click = False
