@@ -12,7 +12,7 @@ from imutils.video import FPS
 from collections import deque
 import cv2.aruco as aruco
 
-def findAruco(img, marker_size=6, total_markers=250, draw=True):
+def findAruco(img, marker_size=4, total_markers=50, draw=True):
 	gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 	key = getattr(aruco, f'DICT_{marker_size}X{marker_size}_{total_markers}')
 	arucoDict = aruco.Dictionary_get(key)
@@ -152,14 +152,14 @@ def main():
 		fps.update()
 		fps.stop()
   
-		print(fps.fps())
+		#print(fps.fps())
 		key = cv.waitKey(1)
 		# if the 'q' key is pressed, break from the loop
 		if key == ord("q"):
 			break
   
 		cv.imshow("frame", frame)
-		cv.resizeWindow("frame", (1500, 1000))
+		cv.resizeWindow("frame", (1000, 800))
 	'''
 	ref_point = []
 	click = False
