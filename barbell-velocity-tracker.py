@@ -59,14 +59,21 @@ def qr_detection(frame):
 
 	return rect, hull
 
-def determine_center(points):
+def determine_center(corners):
+    
+	(topLeft, topRight, bottomRight, bottomLeft) = corners
+	# convert each of the (x, y)-coordinate pairs to integers
+	topRight = (int(topRight[0]), int(topRight[1]))
+	bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
+	bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
+	topLeft = (int(topLeft[0]), int(topLeft[1]))
+	
+	# compute and draw the center (x, y)-coordinates of the
+	# ArUco marker
+	cX = int((topLeft[0] + bottomRight[0]) / 2.0)
+	cY = int((topLeft[1] + bottomRight[1]) / 2.0)
 
-	pt1, pt2, pt3, pt4 = points
-
-	x_coord = (pt1[0] + pt2[0] + pt3[0] + pt4[0]) / 4
-	y_coord = (pt1[1] + pt2[1] + pt3[1] + pt4[1]) / 4
-
-	return (int(x_coord), int(y_coord))
+	return cX, cY
 
 def main():
 	# construct the argument parse and parse the arguments on script call
@@ -81,6 +88,11 @@ def main():
 	args, unknown = ap.parse_known_args()
 	args_dict = vars(args)
  
+	# Set Optical Flow parameters
+	lk_params = dict(winSize=(20, 20),
+					maxLevel=4,
+					criteria=(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.01))
+ 
 	# Check if no video was supplied and set to camera
 	# else, grab a reference to the video file
 	if not args_dict.get("video", False):
@@ -91,54 +103,75 @@ def main():
 	camera = cv.VideoCapture(camera_source)
 	time.sleep(2)
 	(ret, frame) = camera.read()
- 
-	# frameCount = int(camera.get(cv.CAP_PROP_FRAME_COUNT))
-	vid_fps = int(camera.get(cv.CAP_PROP_FPS))
-	print(vid_fps)
-	fps = FPS().start()
+	old_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
  
 	# Initialize deque for list of tracked coords using buffer size
 	coords = deque(maxlen=args_dict["buffer"])
+ 
+	marker_detected= False
+	stop_code=False
 
 	# Create DataFrame to hold coordinates and time
 	data_columns = ['x', 'y', 'time']
 	data_df = pd.DataFrame(data = None, columns=data_columns, dtype=float)
+
+	while not camera_source:
+		(ret, frame) = camera.read()
+
+		key = cv.waitKey(1)
+		# if the 's' key is pressed, break from the loop
+		if key == ord("s"):
+			break
+	
+		AiPhile.textBGoutline(frame, f'Press S to Begin Tracking', (30,80), scaling=0.5,text_color=(AiPhile.MAGENTA ))
+		cv.imshow("Barbell Velocity Tracker - Main Menu", frame)
  
 	start_time = time.time()
 	while True:
 		(ret, frame) = camera.read()
+		gray_frame = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+  
+		# Attempt to Detect AruCo
+		bbox, ids = findAruco(frame)
   
 		# Check current time
 		current_time = time.time() - start_time
-
   
-		bbox, ids = findAruco(frame)
+		stop_code=False
 		# loop over the detected ArUCo corners
 		if len(bbox) > 0:
     		# flatten the ArUco IDs list
 			ids = ids.flatten()
+   
+			# Allow for Optical Flow in the future
+			marker_detected= True
+			stop_code=True
   
 			for (markerCorner, markerID) in zip(bbox, ids):
 				# extract the marker corners (which are always returned
 				# in top-left, top-right, bottom-right, and bottom-left
 				# order)
 				corners = markerCorner.reshape((4, 2))
-				(topLeft, topRight, bottomRight, bottomLeft) = corners
-				# convert each of the (x, y)-coordinate pairs to integers
-				topRight = (int(topRight[0]), int(topRight[1]))
-				bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
-				bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
-				topLeft = (int(topLeft[0]), int(topLeft[1]))
-	
-				# compute and draw the center (x, y)-coordinates of the
-				# ArUco marker
-				cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-				cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+				cX, cY = determine_center(corners)
 				cv.circle(frame, (cX, cY), 4, (0, 0, 255), -1)
     
 				data_df.loc[data_df.size/3] = [cX , cY, current_time]
 				coords.appendleft((cX, cY))
-  
+		if marker_detected and stop_code==False:
+			# print('detecting')
+			new_corners, status, error = cv.calcOpticalFlowPyrLK(old_gray, gray_frame, corners, None, **lk_params)
+			corners = new_corners
+			new_corners = new_corners.astype(int)
+			cX, cY = determine_center(new_corners)
+			frame = AiPhile.fillPolyTrans(frame, new_corners, AiPhile.GREEN, 0.4)
+			AiPhile.textBGoutline(frame, f'Detection: Optical Flow', (30,80), scaling=0.5, text_color=AiPhile.GREEN)
+			cv.circle(frame, (new_corners[0]), 3, AiPhile.GREEN, 2)
+			cv.circle(frame, (cX, cY), 25, AiPhile.VIOLET, 5)
+		
+			data_df.loc[data_df.size/3] = [cX , cY, current_time]
+			# update the position queue
+			coords.appendleft((cX, cY))
+   
 		# loop over deque for tracked position
 		for i in range(1, len(coords)):
 		
@@ -149,8 +182,6 @@ def main():
 			cv.line(frame, coords[i - 1], coords[i], (0, 0, 255), 2)
 
 		cur_frame = camera.get(cv.CAP_PROP_POS_FRAMES)
-		fps.update()
-		fps.stop()
   
 		#print(fps.fps())
 		key = cv.waitKey(1)
@@ -215,13 +246,13 @@ def main():
 	
 		if qr_detected and stop_code==False:
 			# print('detecting')
-			new_points, status, error = cv.calcOpticalFlowPyrLK(old_gray, gray_frame, old_points, None, **lk_params)
-			old_points = new_points 
-			new_points = new_points.astype(int)
-			center_coords = determine_center(new_points)
-			frame = AiPhile.fillPolyTrans(frame, new_points, AiPhile.GREEN, 0.4)
+			new_corners, status, error = cv.calcOpticalFlowPyrLK(old_gray, gray_frame, old_points, None, **lk_params)
+			old_points = new_corners 
+			new_corners = new_corners.astype(int)
+			center_coords = determine_center(new_corners)
+			frame = AiPhile.fillPolyTrans(frame, new_corners, AiPhile.GREEN, 0.4)
 			AiPhile.textBGoutline(frame, f'Detection: Optical Flow', (30,80), scaling=0.5, text_color=AiPhile.GREEN)
-			cv.circle(frame, (new_points[0]), 3, AiPhile.GREEN, 2)
+			cv.circle(frame, (new_corners[0]), 3, AiPhile.GREEN, 2)
 			cv.circle(frame, center_coords, 25, AiPhile.VIOLET, 5)
 		
 			data_df.loc[data_df.size/3] = [center_coords[0] , center_coords[1], current_time]
