@@ -82,16 +82,15 @@ def main():
 	ap.add_argument("-v", "--video",
 		help="optional path for video file")
 	# Buffer size corresponds to length of deque
-	# Larger buffer = longer ball contrail
+	# Larger buffer = longer lasting bar path
 	ap.add_argument("-b", "--buffer", type=int, default=10000,
-	help="max buffer size")
+		help="max buffer size")
+	# Allow for Optical Flow estimation
+	ap.add_argument("-o", "--optical", type=bool, default=False, 
+    	help="allow for Optical Flow estimation when undetected AruCo tag.")
 	args, unknown = ap.parse_known_args()
 	args_dict = vars(args)
- 
-	# Set Optical Flow parameters
-	lk_params = dict(winSize=(20, 20),
-					maxLevel=4,
-					criteria=(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.01))
+
  
 	# Check if no video was supplied and set to camera
 	# else, grab a reference to the video file
@@ -99,6 +98,13 @@ def main():
 		camera_source = 0
 	else:
 		camera_source = args_dict["video"]
+  
+	# Set Optical Flow Estimation based on script call argument
+	allow_OF_estimation = args_dict["optical"]
+	# Set Optical Flow parameters
+	lk_params = dict(winSize=(20, 20),
+					maxLevel=4,
+					criteria=(cv.TERM_CRITERIA_EPS | cv.TERM_CRITERIA_COUNT, 10, 0.01))
  
 	camera = cv.VideoCapture(camera_source)
 	time.sleep(2)
@@ -157,9 +163,10 @@ def main():
     
 				data_df.loc[data_df.size/3] = [cX , cY, current_time]
 				coords.appendleft((cX, cY))
-		if marker_detected and stop_code==False:
+		if marker_detected and stop_code==False and allow_OF_estimation:
 			# print('detecting')
-			new_corners, status, error = cv.calcOpticalFlowPyrLK(old_gray, gray_frame, corners, None, **lk_params)
+			old_corners = np.array(corners, dtype=np.float32)
+			new_corners, status, error = cv.calcOpticalFlowPyrLK(old_gray, gray_frame, old_corners, None, **lk_params)
 			corners = new_corners
 			new_corners = new_corners.astype(int)
 			cX, cY = determine_center(new_corners)
@@ -181,7 +188,8 @@ def main():
 			# Compute line between positions and draw
 			cv.line(frame, coords[i - 1], coords[i], (0, 0, 255), 2)
 
-		cur_frame = camera.get(cv.CAP_PROP_POS_FRAMES)
+
+		old_gray = gray_frame.copy()
   
 		#print(fps.fps())
 		key = cv.waitKey(1)
