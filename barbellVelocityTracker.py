@@ -1,17 +1,25 @@
-# import necessary packages
-import numpy as np
-import cv2 as cv
-import time
-import pandas as pd
-import cv_drawing_functions
-from imutils.video import FPS
-from collections import deque
-import cv2.aruco as aruco
-import matplotlib.pyplot as plt
-import math
-import os
-	
+#------------------------ Import Necessary Libaries -------------------------
 
+# General
+import os
+import time
+from collections import deque
+
+# Statistics/Plotting
+import math
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+# Computer Vision
+import cv2 as cv
+import cv2.aruco as aruco
+
+# Custom functions
+import cv_drawing_functions
+import velocity_stops
+	
+#--------------------------------- Functions -------------------------------------
 def is_rack_derack(history):
 	# When there is a pause or inflection, let's check our previous points to see
 	# if there is more movement in the x direction than the y.
@@ -47,7 +55,7 @@ def calculate_velocity(coord_deque, mmpp, velocity_list, rep_rest_time, reps, an
 	y_distance = y_disp * mmpp
 	x_distance = x_disp * mmpp
 	
-	if abs(y_distance) > barbell_radius / 4:
+	if abs(y_distance) > barbell_perimeter / 32:
 		rep_rest_time = 0.0
 		analyzed_rep = False
      
@@ -79,7 +87,7 @@ def calculate_velocity(coord_deque, mmpp, velocity_list, rep_rest_time, reps, an
 	return velocity_list, rep, calculated_velocity, rep_rest_time, analyzed_rep, change_in_phase, inflection
 	
 
-def showInMovedWindow(winname, img, x, y, add_text=False):
+def showInMovedWindow(winname, img, x, y, vid_writer=None, save_data=False, add_text=False):
 	cv.namedWindow(winname)        # Create a named window
 	cv.moveWindow(winname, x, y)   # Move it to (x,y)
 	img = cv.flip(img, 0)
@@ -89,7 +97,10 @@ def showInMovedWindow(winname, img, x, y, add_text=False):
 		cv_drawing_functions.textBGoutline(imS, f'{add_text}', (100,100), scaling=.75,text_color=(cv_drawing_functions.MAGENTA ))
 	cv.imshow(winname,imS)
  
-def showStats(data_df):
+	if vid_writer is not None:
+		vid_writer.write(imS)
+ 
+def showStats(data_df, rpe, rir):
 		
 	cv.namedWindow("Velocity Stats:")        # Create a named window
 	cv.moveWindow("Velocity Stats:", 800, 300) 
@@ -106,11 +117,14 @@ def showStats(data_df):
 	if data_df.iloc[0]['Rep'] > 1:
 		stats.append(("AVG Velocity Loss", "{:.2f} %".format(float(data_df['Avg Velocity Loss'])), (0, 255, 0))) 
 		stats.append(("PEAK Velocity Loss", "{:.2f} %".format(float(data_df['Peak Velocity Loss'])), (0, 255, 0)))
+  
+	if rpe != 'N/A':
+		stats.append(("Approx. RPE/RIR", "{}/{}".format(rpe, rir), (0, 255, 0)))
 
     # loop over the info tuples and draw them on our frame
 	for (i, (k, v, c)) in enumerate(stats):
 		text = "{}: {}".format(k, v)
-		cv_drawing_functions.textBGoutline(blank_frame, text, (10, 300 - ((i * 40) + 20)), scaling=.5, text_color=(cv_drawing_functions.MAGENTA))
+		cv_drawing_functions.textBGoutline(blank_frame, text, (10, 300 - ((i * 40) + 20)), scaling=.5, text_color=(cv_drawing_functions.BLUE))
  
 	cv.imshow("Velocity Stats:", blank_frame)
 
@@ -137,9 +151,9 @@ def determine_center(corners):
 	# ArUco marker
 	cX = int((topLeft[0] + bottomRight[0]) / 2.0)
 	cY = int((topLeft[1] + bottomRight[1]) / 2.0)
-	radius = topLeft[1] - cY
+	# radius = topLeft[1] - cY
 
-	return cX, cY, radius
+	return cX, cY
 
 def calculate_velocity_averages(avg_velocities, peak_velocities, reps):
 	# rep_list: (average velocity, peak velocity, ending Y displacement)
@@ -272,6 +286,7 @@ def analyze_for_rep(velocity_list, reps):
 
 def generate_plots(data_df, save_data=True, save_folder=''):
     # Generate Rep vs. Velocity Plot
+	fig1 = plt.figure(1)
 	plt.plot(data_df['Rep'], data_df['Avg Velocity'], color='r', label='Avg Vel')
 	plt.plot(data_df['Rep'], data_df['Peak Velocity'], color='g', label='Peak Vel')
 	plt.title('Velocity as Reps Increase')
@@ -283,6 +298,7 @@ def generate_plots(data_df, save_data=True, save_folder=''):
 		plt.savefig(save_to, transparent=True)
  
 	# Generate Velocity Loss plots
+	fig2 = plt.figure(2)
 	plt.plot(data_df['Rep'], data_df['Avg Velocity Loss'], color='r', label='Avg Vel Loss')
 	plt.plot(data_df['Rep'], data_df['Peak Velocity Loss'], color='g', label='Peak Vel Loss')
 	plt.title("Velocity Loss as Reps Increase")
@@ -292,8 +308,17 @@ def generate_plots(data_df, save_data=True, save_folder=''):
 	if save_data:
 		save_to = save_folder + "/Reps_VS_Velocity.svg"
 		plt.savefig(save_to, transparent=True)
-	
+	plt.show()
 
+
+def pixel_to_mm(bbox):
+    aruco_perimeter = cv.arcLength(bbox, True)
+    
+    mmpp = aruco_perimeter /barbell_perimeter
+    
+    return mmpp
+
+# -------------------------------- Driving Function ----------------------------------------------
 def main(video_path='na', use_rpe=False, save_data=True, plot_data=False, save_rpe=False):
 	# Check if no video was supplied and set to camera
 	# else, grab a reference to the video file
@@ -320,26 +345,32 @@ def main(video_path='na', use_rpe=False, save_data=True, plot_data=False, save_r
 	avg_velocities = []
 	peak_velocities = []
  
-	# Set Booleans Variables
+	# Set Boolean Variables
 	marker_detected= False
 	stop_code=False
 	change_in_phase = False
 	analyzed_rep = False
-	inflection = False
-	rep_started = False
+	begin_tracking = False
+	show_path = True
  
 	# Set Numerical Variables
-	total_x_displacement = 0
 	rep_rest_time = 0.0
-	starting_x = None
 	reps = 0
 	avg_vel, peak_vel, avg_vel_loss, peak_vel_loss = 0, 0, pd.NA, pd.NA
+	update_mmpp = 0
+	rpe, rir = 'N/A', 'N/A'
+ 
+	# Create video writing object if saving video to file
+	if save_data:
+		vid_res = (480, 854)
+		result = cv.VideoWriter('tracked_video.mp4', 
+							cv.VideoWriter_fourcc(*'mp4v'),
+							30, vid_res)
  
  	
 	# Initialize Barbell radius
-	global barbell_radius 
-	barbell_radius = 37.5 # MM
-	ref_radius = None
+	global barbell_perimeter 
+	barbell_perimeter = 300 # MM
  
 	# Check video FPS
 	global vid_fps
@@ -354,7 +385,7 @@ def main(video_path='na', use_rpe=False, save_data=True, plot_data=False, save_r
 	if use_rpe:
 		file = save_folder + '/rpe_data.csv'
 		rpe_df = pd.read_csv(file)
- 
+
 
 	start_time = time.time()
 	while True:
@@ -385,15 +416,12 @@ def main(video_path='na', use_rpe=False, save_data=True, plot_data=False, save_r
 			for (markerCorner, markerID) in zip(bbox, ids):
 				# extract the AruCo tag corners and determine center coordinate
 				corners = markerCorner.reshape((4, 2))
-				cX, cY, curr_radius = determine_center(corners)
+				cX, cY = determine_center(corners)
 	
-				# Take initial stationary radius as reference radius
-				if ref_radius is None:
-					# Append the first coords twice so that first displacement == 0
+				# Append the first coords twice so that first displacement == 0
+				if begin_tracking == False:
 					coords.appendleft((cX, cY))
-					ref_radius = curr_radius
-					print(f"Reference Radius: {ref_radius}")
-					mmpp = barbell_radius / ref_radius
+					begin_tracking = True
 	
 				# Draw bounding box on AruCo tag and center circle
 				aruco.drawDetectedMarkers(frame, bbox)
@@ -407,7 +435,8 @@ def main(video_path='na', use_rpe=False, save_data=True, plot_data=False, save_r
 			# Calculate Center coords
 			corners = new_corners
 			new_corners = new_corners.astype(int)
-			cX, cY, radius = determine_center(new_corners)
+   
+			cX, cY = determine_center(new_corners)
 			pts = new_corners.reshape((-1,1,2))
 			
 			# Draw bounding box around aruCo tag and center circle
@@ -416,19 +445,16 @@ def main(video_path='na', use_rpe=False, save_data=True, plot_data=False, save_r
 		
 # -------------------- Velocity and Statistic Calculation --------------------
 		if marker_detected:
+			# Append coordinate point to deque
 			coords.appendleft((cX, cY))
-			velocity_list, rep, calculated_velocity, rep_rest_time, analyzed_rep, change_in_phase, inflection = calculate_velocity(coords, mmpp, velocity_list, rep_rest_time, reps, analyzed_rep, change_in_phase)
-		
-		if inflection:
-			if not rep_started:
-				starting_x, starting_y = cX, cY + 100
-			rep_started = True
-			print(f"Current Radius:{curr_radius}")
-			print(f"MMPP: {barbell_radius/curr_radius}")
    
-		
-		if rep_started:
-			total_x_displacement += abs(starting_x - cX)
+			# Find MMPP conversion every three frames
+			if update_mmpp == 0:
+				mmpp = pixel_to_mm(corners)
+			update_mmpp = (update_mmpp + 1) % 3
+
+			# Calculate velocity and returns 
+			velocity_list, rep, calculated_velocity, rep_rest_time, analyzed_rep, change_in_phase, inflection = calculate_velocity(coords, mmpp, velocity_list, rep_rest_time, reps, analyzed_rep, change_in_phase)
    
 		# If rep detected, add to reps and display current velocity averages per rep
 		if rep:
@@ -437,28 +463,26 @@ def main(video_path='na', use_rpe=False, save_data=True, plot_data=False, save_r
 			avg_velocities.append(calculated_velocity[0])
 			peak_velocities.append(calculated_velocity[1])
 			displacement = calculated_velocity[2]
-   
-			rep_started = False
-			print(f"Off Center by {total_x_displacement}")
-			total_x_displacement = 0
 
-   
 			avg_vel, peak_vel, avg_vel_loss, peak_vel_loss = calculate_velocity_averages(avg_velocities, peak_velocities, reps)
+			if use_rpe:
+				rir, rpe, velocity_stop = velocity_stops.calculate_rpe(rpe_df, avg_vel)
 
 			# Save Data to DataFrame
 			data_df.loc[len(data_df.index)] = [reps, (cX, cY), avg_vel, peak_vel, avg_vel_loss, peak_vel_loss, displacement, current_time]
-			showStats(data_df.tail(1))
+			showStats(data_df.tail(1), rpe, rir)
 
 # -------------------- Path Tracking --------------------
 
 		# loop over deque for tracked position
-		for i in range(1, len(coords)):
-		
-			# Ignore drawing if curr/past position is None
-			if coords[i - 1] is None or coords[i] is None:
-				continue
-			# Compute line between positions and draw
-			cv.line(frame, coords[i - 1], coords[i], (0, 0, 255), 2)
+		if show_path:
+			for i in range(1, len(coords)):
+			
+				# Ignore drawing if curr/past position is None
+				if coords[i - 1] is None or coords[i] is None:
+					continue
+				# Compute line between positions and draw
+				cv.line(frame, coords[i - 1], coords[i], (0, 0, 255), 2)
 
 # -------------------- Keyboard Interrupts --------------------
   
@@ -466,6 +490,8 @@ def main(video_path='na', use_rpe=False, save_data=True, plot_data=False, save_r
 		key = cv.waitKey(1)
 		if key == ord("q"):
 			break
+		elif key == ord("p"):
+			show_path = not show_path
 		
 # -------------------- Show Frame to screen --------------------
 
@@ -473,24 +499,33 @@ def main(video_path='na', use_rpe=False, save_data=True, plot_data=False, save_r
 		old_gray = gray_frame.copy()
   
 		# Show video frame in new window (to resize properly)
-		showInMovedWindow('Barbell Velocity Tracker:',frame, 200, 0)
+		if not save_data:
+			showInMovedWindow('Barbell Velocity Tracker:',frame, 200, 0)
+		else:
+			showInMovedWindow('Barbell Velocity Tracker:', frame, 200, 0, vid_writer=result)
 
 # -------------------- Save Data and Close Windows --------------------
-	filename = ''
+	# Release camera and destroy webcam video
+	camera.release()
+	result.release()
+	cv.destroyAllWindows()
+
+
 	if save_data:
+     
 		# Save this set as a Rep-to-Failure set.
 		if save_rpe:
-			filename = save_folder + "/rpe_data.csv"
-		else:
-			filename = save_folder + "/velocity_data.csv"
-		data_df.to_csv(filename, sep=",")
+			filepath = save_folder + "/rpe_data.csv"
+			# Generate RPE/RIR values into new dataframe
+			rpe_df = velocity_stops.generate_rpe_table(data_df)
+			rpe_df.to_csv(filepath, sep=',')
+   
+		# Save complete dataset.
+		filepath = save_folder + "/velocity_data.csv"
+		data_df.to_csv(filepath, sep=",")
  
 	if plot_data:
 		generate_plots(data_df, save_data, save_folder)
- 
-	# Release camera and destroy webcam video
-	camera.release()
-	cv.destroyAllWindows()
 
 
 if __name__ == '__main__':
