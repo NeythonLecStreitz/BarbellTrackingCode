@@ -25,7 +25,7 @@ def textBG(img, text, position, fonts ,scaling=1, color=(0,255,0), thickness=1, 
     
     cv.putText(img, text, position,fonts, scaling,  color, thickness)
 
-def textBGoutline(img, text, position, fonts=cv.FONT_HERSHEY_SIMPLEX ,scaling=1, text_color=(0,255,0), thickness=1, bg_color=(BLACK)):
+def textBGoutline(img, text, position, fonts=cv.FONT_HERSHEY_COMPLEX ,scaling=1, text_color=(0,255,0), thickness=1, bg_color=(WHITE)):
     img_h, img_w = img.shape[:2]
     x, y = position
     (w, h ), p= cv.getTextSize(text, fonts, scaling, thickness)

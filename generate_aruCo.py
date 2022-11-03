@@ -21,7 +21,7 @@ def generate_markers(marker_size=4, total_markers=50, grid_size=(1, 1)):
 
 	plt.savefig(f"generated_aruCo_{nx}X{ny}.pdf")
 	plt.show()
-	
+    
 	
 def main():
 	# construct the argument parse and parse the arguments on script call

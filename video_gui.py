@@ -49,6 +49,9 @@ while True:
             filename = os.path.join(values['-FOLDER-'], values['-FILE LIST-'][0])
         except:
             continue
+    elif event =='-ARUCO-':
+        # Generate AruCo tag from 6x6_50 Dictionary.
+        generate_aruCo.generate_markers(marker_size=6, total_markers=50, grid_size=(1, 1))
     elif event == '-START-':
         begin_tracking = True
         if values['-USE RPE-']:
@@ -60,7 +63,9 @@ while True:
         
         if begin_tracking:        
             if filename != '':
+                window.hide()
                 barbellVelocityTracker.main(video_path=filename, use_rpe=use_rpe, save_data=values['-SAVE DATA-'], plot_data=values['-PLOT DATA-'], save_rpe=values['-SAVE RPE-'])
+                window.UnHide()
             else:
                 window['-ERROR-'].update("No video file selected...")
             
