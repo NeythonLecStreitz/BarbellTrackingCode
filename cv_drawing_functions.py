@@ -33,4 +33,4 @@ def textBGoutline(img, text, position, fonts=cv.FONT_HERSHEY_COMPLEX ,scaling=1,
     cv.rectangle(img, (x-p, y+p), (x+w+p, y-h-p), bg_color, -1)
     cv.rectangle(img, (x-p, y+p), (x+w+p, y-h-p), text_color,thickness, cv.LINE_AA)
     
-    cv.putText(img, text, position,fonts, scaling,  text_color, thickness, cv.LINE_AA    )
+    cv.putText(img, text, position,fonts, scaling,  text_color, thickness, cv.LINE_AA)
