@@ -5,6 +5,11 @@ import pandas as pd
 import rep_gif
 
 def generate_allrep_velocity(data_df):
+	'''
+	Creates a bar chart showing average and peak velocity of each repetition over the entire set.
+ 	'''
+    
+    
 	data_df = data_df[data_df['Rep'] > 0]
 	data_df['Rep'] = pd.to_numeric(data_df["Rep"])
 	data_df['Avg Velocity'] = pd.to_numeric(data_df['Avg Velocity'])
@@ -22,17 +27,21 @@ def generate_allrep_velocity(data_df):
 	return fig
 
 def create_dash_env(data_df, coord_df, video_path, set_weight):
-	
-	print(f'First Time')
-	print(data_df)
+	'''
+	Creates a Dash environment for displaying the different output plots for bar path and rep velocity statistics.
+	'''
+    
+	# Preprocess velocity and coordinate data by merging the two on Rep #.
 	coord_df['Reps'] = coord_df['Reps'] + 1
 	coord_df = pd.merge(coord_df, data_df[['Avg Velocity', 'Peak Velocity', 'Avg Velocity Loss', 'Peak Velocity Loss', 'Rep']], left_on='Reps', right_on='Rep')
 	name_list = [f'Rep: {x}' for x in coord_df['Reps']]
  
+	# Retrieve the starting coordinates of each repetition.
 	first_coords = coord_df.groupby('Reps').first()
 	rep_list = ["All Reps"] + ["{}".format(i + 1) for i in range(int(coord_df['Reps'].max()))]
  
  
+	# Build the app layout including dropdowns and buttons.
 	app = Dash(__name__)
 
 	app.layout = html.Div([
@@ -64,13 +73,16 @@ def create_dash_env(data_df, coord_df, video_path, set_weight):
   		Input('radio', 'value'),
 		Input('show_loop', 'n_clicks'))
 	def update_bar_chart(rep_type, plot_type, n_clicks):
+		# Update the Dash app based on user input.
 		df = coord_df
   
+		# If bar path, show line plot as graph.
 		if plot_type == 'Bar Path':
 			style = {'display': 'block'}
 			if rep_type == 'All Reps':
 				style2 = {'display': 'block'}
 				title = 'Show Walk Out GIF'
+				# Show looped repetition video if user pressed button.
 				if ctx.triggered_id == 'show_loop':
 					rep_gif.generate_rep_loop(video_path, data_df, 0)
        
@@ -78,9 +90,11 @@ def create_dash_env(data_df, coord_df, video_path, set_weight):
 				min_x = df['cX'].min() - 150
 				max_x = df['cX'].max() + 150
 
+				# Show each repetition as a separate line on the same plot.
 				fig = px.line(df, x="cX", y="cY", title=f'All Reps Bar Path', color='Reps', hover_name=name_list, 
 					hover_data={'Reps': None, 'cX': None, 'cY': None, 'Avg Velocity':':.3f', 'Peak Velocity': ':.3f'})
 		
+				# Annotate the starting coordinate of each repetition with its corresponding rep number
 				for index, row in first_coords.iterrows():
 					x_coord = row['cX'].astype(int)
 					y_coord = row['cY'].astype(int)
@@ -105,6 +119,8 @@ def create_dash_env(data_df, coord_df, video_path, set_weight):
 				))
 		
 		
+				# Add annotations regarding aggregate velocity statistics for the entire set.
+				# Includes total reps, velocity average, peak velocity, max velocity loss.
 				text_x = max_x - 75
 				text_y = df['cY'].median() + 200
 				fig.add_annotation(x=text_x, y=text_y, text=f"Total reps: {data_df['Rep'].max()}", showarrow=False, 
@@ -121,6 +137,7 @@ def create_dash_env(data_df, coord_df, video_path, set_weight):
 				fig.update_xaxes(range = [min_x, max_x], showticklabels=False)
 				fig.update_yaxes(showticklabels=False)
 				fig.update_layout(legend_title_text='Rep')
+			# Change plot to only show an individual repetition instead of all.
 			else:
 				title = "Show Rep GIF"
 				style2 = dict(display='block')
@@ -133,8 +150,12 @@ def create_dash_env(data_df, coord_df, video_path, set_weight):
 				cutoff_index = rep_df['cY'].astype(int).idxmin()
 				concentric = rep_df.iloc[cutoff_index:]
     
+				# Draw the entire bar path onto the plot.
 				fig = px.line(rep_df, x='cX', y='cY',
                   			hover_data={'Reps': None, 'cX': None, 'cY': None, 'Avg Velocity':':.3f', 'Peak Velocity': ':.3f'})
+    
+				# Draw only the concentric portion of the plot over the existing full bar path.
+				# This creates two different colors for the eccentric and concentric portions, but maintains only the hover information from the original line.
 				fig.add_trace(
 					go.Scatter(
 						x=concentric['cX'],
@@ -151,6 +172,9 @@ def create_dash_env(data_df, coord_df, video_path, set_weight):
 				fig.update_xaxes(range = [min_x, max_x], showticklabels=False)
 				fig.update_yaxes(showticklabels=False)
 
+
+				# Add annotations regarding aggregate velocity statistics for the entire set.
+				# Includes total reps, velocity average, peak velocity, max velocity loss.
 				text_x = max_x - 75
 				text_y = df['cY'].median() + 200
 				fig.add_annotation(x=text_x, y=text_y, text=f"Rep: {rep_type}", showarrow=False, 
@@ -170,8 +194,11 @@ def create_dash_env(data_df, coord_df, video_path, set_weight):
 					fig.add_annotation(x=text_x, y=text_y - 200, text="Peak Velocity Loss: {:.3f}%".format(float(df[mask]['Peak Velocity Loss'].iloc[0])), showarrow=False,
 						font=dict(family="Gravitas One, monospace",size=20,color="#000000"))
 
+				# Display rep loop if user pressed button.
 				if ctx.triggered_id == 'show_loop':
 						rep_gif.generate_rep_loop(video_path, data_df, int(rep_type))
+
+		# If users chooses velocity data, display bar chart instead of barbell path line plot.
 		elif plot_type == 'Velocity Data':
 			title = ''
 			style = {'display': 'none'}
@@ -183,7 +210,3 @@ def create_dash_env(data_df, coord_df, video_path, set_weight):
 
 	app.run_server(debug=True, use_reloader=False)
  
-#video_path = r"C:\Users\neyth\Desktop\SeniorComps\Barbell Tracking Videos\Neython Squats\neython_test_squat.mov"
-#data_df = pd.read_csv(r"C:\Users\neyth\Desktop\SeniorComps\Barbell Tracking Videos\Neython Squats\velocity_data_115lbs_Dec-07-2022.csv")
-#coord_df = pd.read_csv(r"C:\Users\neyth\Desktop\SeniorComps\Barbell Tracking Videos\Neython Squats\coord_data_115lbs_Dec-07-2022.csv")
-#create_dash_env(data_df, coord_df, video_path, 175)

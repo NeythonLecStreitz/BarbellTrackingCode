@@ -25,9 +25,10 @@ import output_plots
 	
 #--------------------------------- Functions -------------------------------------    
 def is_rack_derack(history):
-	"""Checks current displacement to see if there is more movement in the x direction than y. 
-		This indicates deracking/racking/setting up, so it clears history to not confuse the rep detection algorithm.
-  """
+	"""
+ 	Checks current displacement to see if there is more movement in the x direction than y. 
+	This indicates deracking/racking/setting up, so it clears history to not confuse the rep detection algorithm.
+  	"""
 
 	pos = 0
 	x_displacement = 0
@@ -45,8 +46,9 @@ def is_rack_derack(history):
 	return False
 
 def calculate_velocity(coord_deque, mmpp, velocity_list, rep_rest_time, reps, analyzed_rep, change_in_phase):
-	"""Calculates current velocity by taking pixel distance between current and previous coordinate point and multiplying by mmpp.
-		Since each frame takes 1/FPS seconds, we have mm/s every 1/FPS.
+	"""
+ 	Calculates current velocity by taking pixel distance between current and previous coordinate point and multiplying by mmpp.
+	Since each frame takes 1/FPS seconds, we have mm/s every 1/FPS.
 	"""
 	rep_rest_threshold = 80.0
 	rep = False
@@ -348,6 +350,12 @@ def pixel_to_mm(bbox):
 
 # -------------------------------- Driving Function ----------------------------------------------
 def main(video_path='na', set_weight=0, save_data=False, save_folder=''):
+	'''
+	Driver function for the entire barbell velocity process. Responsible for retrieving video frames, detecting or estimating the aruCo tag coordinates,
+	and drawing the bar path to the frame.
+	'''
+    
+    
 	# Check if no video was supplied and set to camera
 	# else, grab a reference to the video file
 	if video_path == 'na':

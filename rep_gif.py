@@ -6,6 +6,10 @@ import cv_drawing_functions
 
 
 def showWindow(winname, img, x, y):
+	'''
+	Shows the looped repetition in a moved and scaled window.
+ 	'''	
+ 
 	cv.namedWindow(winname)        # Create a named window
 	cv.moveWindow(winname, x, y)   # Move it to (x,y)
 	img = cv.flip(img, 0)
@@ -17,6 +21,10 @@ def showWindow(winname, img, x, y):
  
 
 def generate_rep_loop(video_path, data_df, rep):
+	'''
+	Plays a loop of a single repetition based on the frame numbers from the barbell velocity tracking output (data_df).
+	'''
+    
     
 	camera = cv.VideoCapture(video_path)
 	time.sleep(2)
