@@ -30,8 +30,22 @@ On the opposite end, software based apps for velocity tracking are typically fre
 
 Therefore, the purpose of this project is to show a proof of concept for creating an accurate and accesibile video-based velocity and bar path tracker.
 
-# Overview
+# Velocity Tracking Overview
 Velocity tracking works in three main steps: tag identification/localization, velocity calculating, and user interface.
+* The AruCo tag identification process happens via the OpenCV python library tools for AruCo tag detection.
+    The frame is first grayscaled before the candidate markers are retrieved.
+
+* Velocity calculation happens by taking the tag displacement times the video FPS over 1000. 
+    This gives the mm/s velocity of the barbell.
+    To convert pixel displacement to mm displacement, we calculate the pixel perimeter of the AruCo tag and divide by the real perimeter of the tag.
+    Velocity calculations are stored and then averaged upon completion of a repetition.
+
+* User interface was kept simple to prioritize velocity tracking features.
+    To start the application, PySimpleGUI was used to build out a file browser to select the video to track.
+    After completion of the barbell tracking, Dash and Plotly were used to show the bar path of each repetition as well as a bar chart of the rep velocities across the entire set. 
+    OpenCV is also used briefly to show a looped video of each individual repetition.
+
+### Algorithm Overview
 The overall algorithm proceeds as follows:
 1. Retrieve next frame and identify AruCo tag in frame.
 2. If no AruCo tag found (likely due to motion blur), use Optical Flow estimation to localize frame based on previous frame.
@@ -40,18 +54,14 @@ The overall algorithm proceeds as follows:
 5. If two inflections have been detected (one at the bottom and one at the top), count full repetition and caculate aggregate velocity statistics across the entire rep.
 6. Continue looping until end of video.
 
-The AruCo tag identification process happens via the OpenCV python library tools for AruCo tag detection.
-The frame is first grayscaled before the candidate markers are retrieved.
+### File Overview
+video_gui: driver for all other files, asks user for video file, save folder, tracking settings, and intitiates the barbellVelocityTracker file.
+barbellVelocityTracker: responsbile for driving the barbell tracking, tag identification, bar path functions, and velocity calculations.
+output_plots: responsible for outputting barbell path graphs and velocity bar charts in a Dash app.
+rep_gif: responsible for creating looped videos of individual repetitions for the output_plots file.
+cv_drawing_functions: helper functions for drawing text on frames and holding CV color options.
+generate_aruco: generates a 6x6_50 aruCo tag to be printed by the user. Is started by the video_gui file if the user selects the button.
 
-Velocity calculation happens by taking the tag displacement times the video FPS over 1000. 
-This gives the mm/s velocity of the barbell.
-To convert pixel displacement to mm displacement, we calculate the pixel perimeter of the AruCo tag and divide by the real perimeter of the tag.
-Velocity calculations are stored and then averaged upon completion of a repetition.
-
-User interface was kept simple to prioritize velocity tracking features.
-To start the application, PySimpleGUI was used to build out a file browser to select the video to track.
-After completion of the barbell tracking, Dash and Plotly were used to show the bar path of each repetition as well as a bar chart of the rep velocities across the entire set. 
-OpenCV is also used briefly to show a looped video of each individual repetition.
 
 
 # Usage
