@@ -11,7 +11,7 @@ Developed for my CS Senior comprehensive project.
 <p align="center">
 <a href="#Motivation">Motivation</a> &nbsp;&bull;&nbsp;
 <a href="#Overview">Overview</a> &nbsp;&bull;&nbsp;
-<a href="#Usage">Usage</a> &nbsp;&bull;&nbsp;
+<a href="#Usage">Usage</a> &nbsp;&nbsp;
 </p>
 
 # Motivation
@@ -30,7 +30,7 @@ On the opposite end, software based apps for velocity tracking are typically fre
 
 Therefore, the purpose of this project is to show a proof of concept for creating an accurate and accesibile video-based velocity and bar path tracker.
 
-# Velocity Tracking Overview
+# Overview
 Velocity tracking works in three main steps: tag identification/localization, velocity calculating, and user interface.
 * The AruCo tag identification process happens via the OpenCV python library tools for AruCo tag detection.
     The frame is first grayscaled before the candidate markers are retrieved.
@@ -55,12 +55,17 @@ The overall algorithm proceeds as follows:
 6. Continue looping until end of video.
 
 ### File Overview
-video_gui: driver for all other files, asks user for video file, save folder, tracking settings, and intitiates the barbellVelocityTracker file.
-barbellVelocityTracker: responsbile for driving the barbell tracking, tag identification, bar path functions, and velocity calculations.
-output_plots: responsible for outputting barbell path graphs and velocity bar charts in a Dash app.
-rep_gif: responsible for creating looped videos of individual repetitions for the output_plots file.
-cv_drawing_functions: helper functions for drawing text on frames and holding CV color options.
-generate_aruco: generates a 6x6_50 aruCo tag to be printed by the user. Is started by the video_gui file if the user selects the button.
+**video_gui:** driver for all other files, asks user for video file, save folder, tracking settings, and intitiates the barbellVelocityTracker file.
+
+**barbellVelocityTracker:** responsbile for driving the barbell tracking, tag identification, bar path functions, and velocity calculations.
+
+**output_plots:** responsible for outputting barbell path graphs and velocity bar charts in a Dash app.
+
+**rep_gif:** responsible for creating looped videos of individual repetitions for the output_plots file.
+
+**cv_drawing_functions:** helper functions for drawing text on frames and holding CV color options.
+
+**generate_aruco:** generates a 6x6_50 aruCo tag to be printed by the user. Is started by the video_gui file if the user selects the button.
 
 
 
