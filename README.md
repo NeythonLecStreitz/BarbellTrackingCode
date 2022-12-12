@@ -138,6 +138,14 @@ Pressing the **Show rep loop** button will begin playing a looped version of eit
 Unfortunately, this is without a contrail showing the bar path.
 To note is that the bar path plots might look slightly skewed because they are in 2D while the actual bar path in the video is likely at a slight angle.
 
+
+
+
+Velocity Tracking          |  Bar Path
+:-------------------------:|:-------------------------:
+![image](https://user-images.githubusercontent.com/70167258/207140929-67e10329-db3c-4d5d-8a20-3ef873dd3263.png)  |  ![image](https://user-images.githubusercontent.com/70167258/207141248-f96d0a5b-8cbe-4cf1-bdc8-cd152973a3d5.png)
+
+
 # Future
 * Improving velocity tracking accuracy to function even at higher velocities.
 * Updating the GUI to be more beginner-friendly with information on VBT practices.
