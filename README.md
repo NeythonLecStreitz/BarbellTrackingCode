@@ -150,6 +150,12 @@ Velocity Tracking          |  Bar Path
 :-------------------------:|:-------------------------:
 ![image](https://user-images.githubusercontent.com/70167258/207140929-67e10329-db3c-4d5d-8a20-3ef873dd3263.png)  |  ![image](https://user-images.githubusercontent.com/70167258/207141248-f96d0a5b-8cbe-4cf1-bdc8-cd152973a3d5.png)
 
+# Tips
+* Tape the AruCo tag to a piece of sturdy cardboard at a medium size. Make sure to keep some white space on the paper.
+* Record in 60 FPS, side-on as much as possible. 
+* Set your phone down as having someone record may cause the phone to sway and incorrectly detect movement of the bar.
+* Perform your set as strictly as possible with very little commotion during walk-out/racking phases.
+* Do not add extra bounces, pauses, swaying side-to-side, or otherwise movement that might confuse detection of the repetition.
 
 # Future
 * Improving velocity tracking accuracy to function even at higher velocities.
