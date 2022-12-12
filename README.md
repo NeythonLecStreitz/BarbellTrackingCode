@@ -111,7 +111,9 @@ A sample video is included in this repository, ```sample_squat.mov```.
 When ready, press **Track barbell** to start.
 You will be prompted to enter a folder to save the data into and to input the weight of the barbell (to help name the resulting data).
 
-![image](https://user-images.githubusercontent.com/70167258/207139575-65c9028f-9347-47cf-b73b-a6390e836ca5.png)
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/70167258/207139575-65c9028f-9347-47cf-b73b-a6390e836ca5.png" />
+</p>
 
 In the future, weight input will also be used for power output.
 After a few seconds, the video will appear and begin to play.
