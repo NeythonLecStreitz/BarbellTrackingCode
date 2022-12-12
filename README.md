@@ -72,15 +72,15 @@ The overall algorithm proceeds as follows:
 # Usage
 ### Dependencies
 Use the package manager pip to install all required libraries.
-'''bash
+```bash
 pip install -r requirements.txt
-'''
+```
 
 ### Starting the App
 To begin tracking, run the video_gui.py file.
 ```bash
 python .\video_gui.py
-'''
+```
 
 A simple GUI will appear with several options. 
 ![image](https://user-images.githubusercontent.com/70167258/207134752-7bbccf98-f5e3-4156-ac1c-b91fc530179a.png)
