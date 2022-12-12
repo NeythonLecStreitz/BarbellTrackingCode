@@ -9,9 +9,14 @@ Developed for my CS Senior comprehensive project.
 </p>
 
 <p align="center">
+  <img src="https://user-images.githubusercontent.com/70167258/207141756-217b32fb-82f6-44b5-a3af-33199319f12b.png" />
+</p>
+
+<p align="center">
 <a href="#Motivation">Motivation</a> &nbsp;&bull;&nbsp;
 <a href="#Overview">Overview</a> &nbsp;&bull;&nbsp;
 <a href="#Usage">Usage</a> &nbsp;&bull;&nbsp;
+<a href="#Tips">Tips</a> &nbsp;&bull;&nbsp;
 <a href="#Future">Future</a> &nbsp;&nbsp; 
 </p>
 
