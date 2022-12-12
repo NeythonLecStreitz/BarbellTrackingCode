@@ -11,7 +11,8 @@ Developed for my CS Senior comprehensive project.
 <p align="center">
 <a href="#Motivation">Motivation</a> &nbsp;&bull;&nbsp;
 <a href="#Overview">Overview</a> &nbsp;&bull;&nbsp;
-<a href="#Usage">Usage</a> &nbsp;&nbsp;
+<a href="#Usage">Usage</a> &nbsp;&bull;&nbsp;
+<a href="#Future">Future Work</a> &nbsp;&nbsp; 
 </p>
 
 # Motivation
@@ -83,7 +84,9 @@ python .\video_gui.py
 ```
 
 A simple GUI will appear with several options. 
-![image](https://user-images.githubusercontent.com/70167258/207134752-7bbccf98-f5e3-4156-ac1c-b91fc530179a.png)
+
+![image](https://user-images.githubusercontent.com/70167258/207139464-c85499aa-ade1-4401-ba67-9f53020fc195.png)
+
 In general it is best to keep all options at default.
 This includes saving the set data to .csv files and showing the Dash plots after conclusion of the tracking.
 
@@ -102,6 +105,9 @@ A sample video is included in this repository, ```sample_squat.mov```.
 
 When ready, press **Track barbell** to start.
 You will be prompted to enter a folder to save the data into and to input the weight of the barbell (to help name the resulting data).
+
+![image](https://user-images.githubusercontent.com/70167258/207139575-65c9028f-9347-47cf-b73b-a6390e836ca5.png)
+
 In the future, weight input will also be used for power output.
 After a few seconds, the video will appear and begin to play.
 You should notice a red contrail begin to follow the tag.
@@ -110,6 +116,8 @@ You should notice a red contrail begin to follow the tag.
 
 To facilitate the output plots after conclusion of the set, at the start of the first repetition (as you are about to go down), press **s** on your keyboard to intitiate tracking. This helps differentiate the walk out portion from individual repetitions. At the conclusion of your last repetition (as you hit the top), press **s** once more on your keyboard to stop the tracking.
 If you do not need the output plots and just want to track in real-time, the algorithm will still work automatically (so you do not need to press **s**).
+The text at the top of the frame should be blue if you have NOT toggled tracking, and magenta if tracking IS toggled.
+
 
 ### Viewing Output Plots
 
