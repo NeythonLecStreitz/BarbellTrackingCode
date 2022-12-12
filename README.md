@@ -12,7 +12,7 @@ Developed for my CS Senior comprehensive project.
 <a href="#Motivation">Motivation</a> &nbsp;&bull;&nbsp;
 <a href="#Overview">Overview</a> &nbsp;&bull;&nbsp;
 <a href="#Usage">Usage</a> &nbsp;&bull;&nbsp;
-<a href="#Future">Future Work</a> &nbsp;&nbsp; 
+<a href="#Future">Future</a> &nbsp;&nbsp; 
 </p>
 
 # Motivation
@@ -138,7 +138,7 @@ Pressing the **Show rep loop** button will begin playing a looped version of eit
 Unfortunately, this is without a contrail showing the bar path.
 To note is that the bar path plots might look slightly skewed because they are in 2D while the actual bar path in the video is likely at a slight angle.
 
-# Future Work
+# Future
 * Improving velocity tracking accuracy to function even at higher velocities.
 * Updating the GUI to be more beginner-friendly with information on VBT practices.
 * Building a more robust AruCo tag "device" to fit on the barbell.
