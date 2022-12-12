@@ -70,7 +70,70 @@ The overall algorithm proceeds as follows:
 
 
 # Usage
+### Dependencies
+Use the package manager pip to install all required libraries.
+'''bash
+pip install -r requirements.txt
+'''
+
+### Starting the App
+To begin tracking, run the video_gui.py file.
+```bash
+python .\video_gui.py
+'''
+
+A simple GUI will appear with several options. 
+![image](https://user-images.githubusercontent.com/70167258/207134752-7bbccf98-f5e3-4156-ac1c-b91fc530179a.png)
+In general it is best to keep all options at default.
+This includes saving the set data to .csv files and showing the Dash plots after conclusion of the tracking.
+
+### Printing a Tag
+To print an AruCo tag, press the **Generate AruCo** button and print out the tag.
+The default size should work but you may try a slightly smaller tag.
+Place the tag on some sturdy back (cardboard works) and tape to the end of the barbell to track.
+Remember that when cutting the tag out, the tag needs some white space to highlight the black border.
+For ease-of-use, try taping a small cardboard paper tube to the end of the tag to easily slip the tag on-and-off the barbell.
 
 
+### Tracking a Video
+In the top right corner of the GUI, select **browse** and find the folder with the video to track.
+Select the video and it will be highlighted black.
+A sample video is included in this repository, ```sample_squat.mov```.
 
-#
+When ready, press **Track barbell** to start.
+You will be prompted to enter a folder to save the data into and to input the weight of the barbell (to help name the resulting data).
+In the future, weight input will also be used for power output.
+After a few seconds, the video will appear and begin to play.
+You should notice a red contrail begin to follow the tag.
+
+**IMPORTANT:**
+
+To facilitate the output plots after conclusion of the set, at the start of the first repetition (as you are about to go down), press **s** on your keyboard to intitiate tracking. This helps differentiate the walk out portion from individual repetitions. At the conclusion of your last repetition (as you hit the top), press **s** once more on your keyboard to stop the tracking.
+If you do not need the output plots and just want to track in real-time, the algorithm will still work automatically (so you do not need to press **s**).
+
+### Viewing Output Plots
+
+Upon conclusion of the set, if you selected to save the data, two new files should have been created: cooord_data and velocity_data.
+coord_data holds information on specific coordinates of the bar throughout the entire set.
+velocity_data simply holds information on repetition average velocities and the frame number of the end of each repetition.
+
+If you selected to view output plots, in whatever IDE you use, a Dash app should begin running. On my machine it looks as such:
+```
+Dash is running on http://127.0.0.1:8050/
+
+ * Serving Flask app 'output_plots'
+ * Debug mode: on
+```
+
+Follow the address and all output plots including bar path for every rep and a bar chart of the entire set should appear.
+Pressing the **Show rep loop** button will begin playing a looped version of either the walk out or an individual repetition.
+Unfortunately, this is without a contrail showing the bar path.
+To note is that the bar path plots might look slightly skewed because they are in 2D while the actual bar path in the video is likely at a slight angle.
+
+# Future Work
+* Improving velocity tracking accuracy to function even at higher velocities.
+* Updating the GUI to be more beginner-friendly with information on VBT practices.
+* Building a more robust AruCo tag "device" to fit on the barbell.
+* Adding information on power output.
+* Highlighting specific areas of lower speed within a single repetition to uncover sticking/weak points.
+* Adding support for other barbell-based exercises (bench press, deadlift, ...).
