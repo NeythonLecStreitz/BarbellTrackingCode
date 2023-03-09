@@ -10,6 +10,13 @@ import pandas as pd
 
 
 def start_gui():
+    '''
+    Driver for the entire app.
+    Responsible for creating the initial GUI for selecting video files and where to save calculated data.
+    Also starts the barbell tracking once the user has selected the settings they want.
+    '''
+    
+    
     filename = ''
     fnames = []
     data_df, temp_df = 0, 0
