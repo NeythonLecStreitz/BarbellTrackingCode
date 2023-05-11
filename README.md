@@ -134,7 +134,7 @@ To download this data, press **DOWNLOAD DATA**.
 
 The **BAR VELOCITY** tab includes velocity statistics as a histogram across the entire set. In a quality set, you should see velocity decreasing as the repetitions increase.
 
-The **Bar Path** tab includes the bar path for each repetition including the entire set. Use the dropdown menu to the right to select specific repetitions. Additionally, you can press the **SHOW REP** button to view a looped video of that specific repetition.
+The **BAR PATH** tab includes the bar path for each repetition including the entire set. Use the dropdown menu to the right to select specific repetitions. Additionally, you can press the **SHOW REP** button to view a looped video of that specific repetition.
 To note is that the bar path plots might look slightly skewed because they are in 2D while the actual bar path in the video is likely at a slight angle.
 
 The **VIDEO** tab includes the ability to watch an untracked and tracked version of the set. 
