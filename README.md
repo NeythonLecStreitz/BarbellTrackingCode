@@ -61,7 +61,6 @@ The overall algorithm proceeds as follows:
 6. Continue looping until end of video.
 
 ### File Overview
-**video_gui:** driver for all other files, asks user for video file, save folder, tracking settings, and intitiates the barbellVelocityTracker file.
 
 **barbellVelocityTracker:** responsbile for driving the barbell tracking, tag identification, bar path functions, and velocity calculations.
 
@@ -83,12 +82,12 @@ pip install -r requirements.txt
 ```
 
 ### Starting the App
-To begin tracking, run the video_gui.py file.
+To begin tracking, run the app.py file in the dashboard folder.
 ```bash
-python .\video_gui.py
+python .\dashboard\app.py
 ```
 
-A simple GUI will appear with several options. 
+A dashboard will appear with several options. 
 
 ![image](https://user-images.githubusercontent.com/70167258/207139464-c85499aa-ade1-4401-ba67-9f53020fc195.png)
 
