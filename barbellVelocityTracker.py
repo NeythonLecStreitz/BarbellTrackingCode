@@ -14,9 +14,11 @@ import numpy as np
 import plotly.express as px
 from dash import Dash, dcc, html, Input, Output
 
+
 # Computer Vision
 import cv2 as cv
 import cv2.aruco as aruco
+import ffmpeg
 
 # Custom functions
 import cv_drawing_functions
@@ -96,7 +98,7 @@ def calculate_velocity(coord_deque, mmpp, velocity_list, rep_rest_time, reps, an
 	return velocity_list, rep, calculated_velocity, rep_rest_time, analyzed_rep, change_in_phase, inflection
 	
 
-def showInMovedWindow(winname, img, x, y, tracking_toggled=False, add_text=False):
+def showInMovedWindow(winname, img, x, y, out, tracking_toggled=False, add_text=False):
 	'''
 	Creates a dummy window for displaying the velocity tracking video. 
 	Without this resized window, an iPhone video cannot be properly viewed on a laptop screen.
@@ -116,7 +118,11 @@ def showInMovedWindow(winname, img, x, y, tracking_toggled=False, add_text=False
 		# If tracking off, show in Blue
 		else:
 			cv_drawing_functions.textBGoutline(imS, f'{add_text}', (25,100), scaling=.75,text_color=(cv_drawing_functions.BLUE ))
+	
+	out.write(imS)
 	cv.imshow(winname,imS)
+ 
+	return out
  
 def showStats(data_df):
 	'''
@@ -348,6 +354,12 @@ def pixel_to_mm(bbox):
 	
 	return mmpp
 
+def convert_to_mp4(mp4_file):
+    name, ext = os.path.splitext(mp4_file)
+    out_name = name + "_converted" + ".mp4"
+    ffmpeg.input(mp4_file).output(out_name).run()
+    print("Finished converting {}".format(mp4_file))
+
 # -------------------------------- Driving Function ----------------------------------------------
 def main(video_path='na', set_weight=0, save_data=False, save_folder=''):
 	'''
@@ -355,7 +367,7 @@ def main(video_path='na', set_weight=0, save_data=False, save_folder=''):
 	and drawing the bar path to the frame.
 	'''
     
-    
+	print("STARTING UP!")
 	# Check if no video was supplied and set to camera
 	# else, grab a reference to the video file
 	if video_path == 'na':
@@ -364,6 +376,8 @@ def main(video_path='na', set_weight=0, save_data=False, save_folder=''):
 		camera_source = video_path
 		save_folder = os.path.split(video_path)[0]
   
+	out = cv.VideoWriter('output.mp4', cv.VideoWriter_fourcc(*'mpv4'), 30, (480, 854))
+  
 	# Set Optical Flow parameters
 	lk_params = dict(winSize=(20, 20),
 					maxLevel=4,
@@ -371,6 +385,7 @@ def main(video_path='na', set_weight=0, save_data=False, save_folder=''):
  
 	# Initialize camera and grayframe
 	camera = cv.VideoCapture(camera_source)
+ 
 	time.sleep(2)
 	(ret, frame) = camera.read()
 	old_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
@@ -527,16 +542,18 @@ def main(video_path='na', set_weight=0, save_data=False, save_folder=''):
   
 		# Show video frame in new window (to resize properly)
 		if not start_tracking:
-			showInMovedWindow('Barbell Velocity Tracker:',frame, 200, 0, tracking_toggled=False, add_text="Press 's' to toggle tracking ON.")
+			out = showInMovedWindow('Barbell Velocity Tracker:',frame, 200, 0, out, tracking_toggled=False, add_text="Press 's' to toggle tracking ON.")
 		else: 
-			showInMovedWindow('Barbell Velocity Tracker:',frame, 200, 0, tracking_toggled=True, add_text="Press 's' to toggle tracking OFF.")
+			out = showInMovedWindow('Barbell Velocity Tracker:',frame, 200, 0, out, tracking_toggled=True, add_text="Press 's' to toggle tracking OFF.")
 
 # -------------------- Save Data and Close Windows --------------------
 	# Release camera and destroy webcam video
+	out.release()
 	camera.release()
  
 	cv.destroyWindow("Barbell Velocity Tracker:")
 	cv.destroyWindow("Velocity Stats:")
+ 
 	while True:
 		key = False
 		show_set_avg(data_df)
@@ -547,7 +564,6 @@ def main(video_path='na', set_weight=0, save_data=False, save_folder=''):
 			break
 	cv.destroyAllWindows()
    
-   
 	if save_data:
 		# Save complete dataset.
 		today = date.today()
@@ -557,7 +573,8 @@ def main(video_path='na', set_weight=0, save_data=False, save_folder=''):
 		data_df.to_csv(filepath, sep=",")
 		coord_df.to_csv(filepath2, sep=",")
 
-	output_plots.create_dash_env(data_df, coord_df, video_path, set_weight)
+	# output_plots.create_dash_env(data_df, coord_df, video_path, set_weight)
+	return data_df, coord_df
 
 if __name__ == '__main__':
 	main()
