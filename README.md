@@ -139,11 +139,10 @@ To note is that the bar path plots might look slightly skewed because they are i
 
 The **VIDEO** tab includes the ability to watch an untracked and tracked version of the set. 
 
-Velocity Tracking          |  Bar Path
-:-------------------------:|:-------------------------:
-![image](https://github.com/NeythonLecStreitz/BarbellTrackingCode/assets/70167258/9c57a724-fb13-42ba-808c-8c3848ae8e9e)
-  |  ![image](https://github.com/NeythonLecStreitz/BarbellTrackingCode/assets/70167258/388dbac5-e7ae-4a4f-805f-8647c0ded1b3)
-
+Velocity Tracking          |  Bar Path                 | Video
+:-------------------------:|:-------------------------:|:-------------------------:
+![image](https://github.com/NeythonLecStreitz/BarbellTrackingCode/assets/70167258/9c57a724-fb13-42ba-808c-8c3848ae8e9e) |  ![image](https://github.com/NeythonLecStreitz/BarbellTrackingCode/assets/70167258/388dbac5-e7ae-4a4f-805f-8647c0ded1b3) | ![image](https://github.com/NeythonLecStreitz/BarbellTrackingCode/assets/70167258/3ab9c465-d9fa-4384-b4b2-a1a4548aa1cf)
+ 
 
 # Tips
 * Tape the AruCo tag to a piece of sturdy cardboard at a medium size. Make sure to keep some white space on the paper.
