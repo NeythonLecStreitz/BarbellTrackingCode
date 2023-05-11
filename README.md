@@ -61,7 +61,6 @@ The overall algorithm proceeds as follows:
 6. Continue looping until end of video.
 
 ### File Overview
-**video_gui:** driver for all other files, asks user for video file, save folder, tracking settings, and intitiates the barbellVelocityTracker file.
 
 **barbellVelocityTracker:** responsbile for driving the barbell tracking, tag identification, bar path functions, and velocity calculations.
 
@@ -83,20 +82,21 @@ pip install -r requirements.txt
 ```
 
 ### Starting the App
-To begin tracking, run the video_gui.py file.
+To begin tracking, run the app.py file in the dashboard folder.
 ```bash
-python .\video_gui.py
+python .\dashboard\app.py
 ```
 
-A simple GUI will appear with several options. 
+A dashboard will appear with several options. 
 
-![image](https://user-images.githubusercontent.com/70167258/207139464-c85499aa-ade1-4401-ba67-9f53020fc195.png)
+![image](https://github.com/NeythonLecStreitz/BarbellTrackingCode/assets/70167258/17c2e55e-dfcb-4061-b219-90db7fdaaf7e)
 
-In general it is best to keep all options at default.
-This includes saving the set data to .csv files and showing the Dash plots after conclusion of the tracking.
+
+To begin, create a new session.
+You will be asked to name the session and indicate how many videos you will be uploading.
 
 ### Printing a Tag
-To print an AruCo tag, press the **Generate AruCo** button and print out the tag.
+To print an AruCo tag, press the **About** button and select **PRINT**.
 The default size should work but you may try a slightly smaller tag.
 Place the tag on some sturdy back (cardboard works) and tape to the end of the barbell to track.
 Remember that when cutting the tag out, the tag needs some white space to highlight the black border.
@@ -104,15 +104,14 @@ For ease-of-use, try taping a small cardboard paper tube to the end of the tag t
 
 
 ### Tracking a Video
-In the top right corner of the GUI, select **browse** and find the folder with the video to track.
-Select the video and it will be highlighted black.
+Once you have created a session and uploaded the videos you want to track, navigate to the **WORKOUT** tab.
 A sample video is included in this repository, ```sample_squat.mov```.
 
-When ready, press **Track barbell** to start.
-You will be prompted to enter a folder to save the data into and to input the weight of the barbell (to help name the resulting data).
+In this tab, select the specific video you'd like to track, and indicate the weight and number of reps for the set.
+Press the **TRACK** button and wait until a video beings playing.
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/70167258/207139575-65c9028f-9347-47cf-b73b-a6390e836ca5.png" />
+  <img src="https://github.com/NeythonLecStreitz/BarbellTrackingCode/assets/70167258/8067c7b4-806d-489b-b6d6-94fed6c1b794" />
 </p>
 
 In the future, weight input will also be used for power output.
@@ -131,26 +130,19 @@ The text at the top of the frame should be blue if you have NOT toggled tracking
 Upon conclusion of the set, if you selected to save the data, two new files should have been created: cooord_data and velocity_data.
 coord_data holds information on specific coordinates of the bar throughout the entire set.
 velocity_data simply holds information on repetition average velocities and the frame number of the end of each repetition.
+To download this data, press **DOWNLOAD DATA**.
 
-If you selected to view output plots, in whatever IDE you use, a Dash app should begin running. On my machine it looks as such:
-```
-Dash is running on http://127.0.0.1:8050/
+The **BAR VELOCITY** tab includes velocity statistics as a histogram across the entire set. In a quality set, you should see velocity decreasing as the repetitions increase.
 
- * Serving Flask app 'output_plots'
- * Debug mode: on
-```
-
-Follow the address and all output plots including bar path for every rep and a bar chart of the entire set should appear.
-Pressing the **Show rep loop** button will begin playing a looped version of either the walk out or an individual repetition.
-Unfortunately, this is without a contrail showing the bar path.
+The **BAR PATH** tab includes the bar path for each repetition including the entire set. Use the dropdown menu to the right to select specific repetitions. Additionally, you can press the **SHOW REP** button to view a looped video of that specific repetition.
 To note is that the bar path plots might look slightly skewed because they are in 2D while the actual bar path in the video is likely at a slight angle.
 
+The **VIDEO** tab includes the ability to watch an untracked and tracked version of the set. 
 
-
-
-Velocity Tracking          |  Bar Path
-:-------------------------:|:-------------------------:
-![image](https://user-images.githubusercontent.com/70167258/207140929-67e10329-db3c-4d5d-8a20-3ef873dd3263.png)  |  ![image](https://user-images.githubusercontent.com/70167258/207141248-f96d0a5b-8cbe-4cf1-bdc8-cd152973a3d5.png)
+Velocity Tracking          |  Bar Path                 | Video
+:-------------------------:|:-------------------------:|:-------------------------:
+![image](https://github.com/NeythonLecStreitz/BarbellTrackingCode/assets/70167258/9c57a724-fb13-42ba-808c-8c3848ae8e9e) |  ![image](https://github.com/NeythonLecStreitz/BarbellTrackingCode/assets/70167258/388dbac5-e7ae-4a4f-805f-8647c0ded1b3) | ![image](https://github.com/NeythonLecStreitz/BarbellTrackingCode/assets/70167258/3ab9c465-d9fa-4384-b4b2-a1a4548aa1cf)
+ 
 
 # Tips
 * Tape the AruCo tag to a piece of sturdy cardboard at a medium size. Make sure to keep some white space on the paper.
